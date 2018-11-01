@@ -2,7 +2,7 @@
 # About the project
 
 #Course:
-  *Introduction to Open Data Science 2018*
+*Introduction to Open Data Science 2018*
   
 ##Short description:
 *Aim of this course is to demonstrate main principles of data handling, statistical methods, and data visualization. In the end of this course, students will be able to apply the principle of reproducible research. In addition, after this course, you will see the "light" of programming and possibilities of data science! Have fun!*
