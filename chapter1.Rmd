@@ -1,14 +1,14 @@
 
 # About the project
 
-*Course:
-  Introduction to Open Data Science 2018*
+#Course:
+  *Introduction to Open Data Science 2018*
   
-*Short description:
-  Aim of this course is to demonstrate main principles of data handling, statistical methods, and data visualization. In the end of this course, students will be able to apply the principle of reproducible research. In addition, after this course, you will see the "light" of programming and possibilities of data science! Have fun!*
+##Short description:
+*Aim of this course is to demonstrate main principles of data handling, statistical methods, and data visualization. In the end of this course, students will be able to apply the principle of reproducible research. In addition, after this course, you will see the "light" of programming and possibilities of data science! Have fun!*
   
-*GitHub repository:
-  https://raatevaa.github.io/IODS-project/*
+#GitHub repository:
+*https://raatevaa.github.io/IODS-project/*
   
   
 *Write a short description about the course and add a link to your github repository here. This is an R markdown (.Rmd) file so you can use R markdown syntax. See the 'Useful links' page in the mooc area (chapter 1) for instructions.*
