@@ -27,7 +27,7 @@
 
   
 ## GitHub repository:
-*https://raatevaa.github.io/IODS-project/*
+
 [Link to my GitHub repo](https://raatevaa.github.io/IODS-project/) 
 
 
