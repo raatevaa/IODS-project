@@ -1,7 +1,199 @@
-# Insert chapter 2 title here
+---
+title: "Chapter 2"
+output: html_document
+---
+
+# Data analysis exercise
+## Data description
+
+Data aims to model the relationship between learning approaches and students achievements in an introductory statistics course in Finland. There are total of 7 variables which explain the students achievements (points). Variables are "gender", "Age", "Attitude","Deep","Stra" and "Surf".
+
+### Data dimensions
+
+Data has 166 observations (students) and 7 variables. Hence, data is a table with 166 rows and 7 columns.
+
+>Variables:
+
+- Age;      Age (in years) derived from the date of birth
+
+- Attitude; Global attitude toward statistics
+
+- Points;   Exam points
+
+- gender;   Gender: M (Male), F (Female)
+
+- Deep;     Deep approach             ~d_sm+d_ri+d_ue where, 
+                                      d_sm = Seeking Meaning
+                                      d_ri = Relating Ideas
+                                      d_ue = Use of Evidence
+                                     
+- Surf;     Surface approach          ~su_lp+su_um+su_sb where,
+                                      su_lp = Lack of Purpose
+                                      su_um = Unrelated Memorising
+                                      su_sb = Syllabus-boundness
+
+- Stra;     Strategic approach        ~st_os+st_tm where,
+                                      st_os = Organized Studying
+                                      st_tm = Time Management
+
+
+
+### Variable statistics
+<br>
+
+```{r students}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/learning2014.txt"
+data_stud <- read.delim(url, sep=",")
+summary(data_stud)
+```
+
+## Data Visualization
+### Plots
+```{r students2}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/learning2014.txt"
+data_stud <- read.delim(url, sep=",")
+boxplot(split(data_stud$points,data_stud$gender),main='Points by Gender')
+boxplot(split(data_stud$attitude,data_stud$gender),main='Attitude by Gender')
+boxplot(split(data_stud$deep,data_stud$gender),main='Deep by Gender')
+boxplot(split(data_stud$stra,data_stud$gender),main='Stra by Gender')
+boxplot(split(data_stud$surf,data_stud$gender),main='Surf by Gender')
+pairs(~points+age+attitude+deep+stra+surf,data=data_stud, 
+   main="Scatterplot Matrix")
+library(corrplot)
+data_stud$gender <- factor(data_stud$gender)
+num_data <- data_stud[,c("points","age","attitude","deep","stra","surf")]
+res <- cor(num_data)
+corrplot(as.matrix(res), method="circle")
+```
+
+<br>
+<br>
+
+# Comments on data
+
+### Gender
+There seems to be slight variation in points between the genders:
+```{r students3}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/learning2014.txt"
+data_stud <- read.delim(url, sep=",")
+tapply(data_stud$points, data_stud$gender, mean)
+```
+Difference in mean points is (23.48214-22.32727) = 1.16
+
+**Conclusion:** males tend to get slightly higher points than women.
+
+Interesting feature between genders is that especially in attitude-variable (which describes general attitude towards statistics) is higher in males than females. Females on the other hand, are higher at stra (strategic approach: organizing studies and time management). Females might find lack of purpose in statistic related studies and studying it might include unrealted memorising because of it (Surf). 
+
+
+### Age
+
+When looking at age-variable, one should note that there is extremely high number of occurences 20-30-years category: it might give us bad image from how age truly affects the total points of student.
+
+Correlation between points and age:
+
+```{r students4}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/learning2014.txt"
+data_stud <- read.delim(url, sep=",")
+with(data_stud, cor(age, points))
+```
+
+Correlation is negative.
+
+**Conclusion:** older the student is - lower the points are. Although, correlation is not particularly strong.
+
+### Attitude, Stra, Deep and Surf
+
+Correlations between students attitude and study habits, and exam points.
+
+```{r students5}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/learning2014.txt"
+data_stud <- read.delim(url, sep=",")
+with(data_stud, cor(attitude, points))
+with(data_stud, cor(stra, points))
+with(data_stud, cor(deep, points))
+with(data_stud, cor(surf, points))
+```
+
+The best variable which indicates students points is, by far, **attitude**. Correlation is 0.44.
+
+Stra and Surf are give second best interpretiations: Students with strategic approach tend to get better points, on the other hand Surf decreases students points (Lack of Purpose, Unrelated Memorising, Syllabus-boundness).
+
+
+## Correlations between the descriptive variables
+
+From correlation plot (with circles from red - blue), we are able to notice that Surf and Deep has strong negative correlation. Students that lack motivation, do not seek new ideas or meaning from statistics.
+
+Strategic approach (Stra) correlates positively between all the variables, except Surf. 
+
 
 *Describe the work you have done this week and summarize your learning.*
 
+
+
 - Describe your work and results clearly. 
 - Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using  
+- Assume the reader has no previous knowledge of your data or the more advanced methods you are using 
+
+<br>
+<br>
+
+# Fitting regression model
+
+## Model parameters
+
+I chose three explanatory variables which are:
+
+- Attitude
+- Stra
+- Age
+
+```{r students6}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/learning2014.txt"
+l_model <- lm(points ~ attitude + stra + age, data=data_stud)
+summary(l_model)
+
+```
+
+### What it does?
+
+Multiple linear regression explains the relationship between descriptive variables (attitude, stra, age) and response variables (points). Model fits linear (linear line, bluntly) equation to observed data.
+
+### Results
+
+As expected, attitude shows strong statistical significance in the model output. Attitudes p-value is clearly under 0.001 (4.7*10^-9, to be exact). Strategic approach (Stra) shows clear statistical significance: altough p-value is just a bit over 0.05, it is still rather excellent explanator for students points. Age is the worst explanator: p-value of age is high as 0.09.
+
+Although, some of the explanatory variables show statistical significance in linear model, the R-squared value of the whole model stays rather low: 0.20.
+
+Model: 
+Points_est = 10.89543 + (3.48077*attitude) +  (1.00371*stra) - (0.08822*age)
+
+<br>
+<br>
+
+### Re-model, without age
+
+```{r students7}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/learning2014.txt"
+l_model <- lm(points ~ attitude + stra, data=data_stud)
+summary(l_model)
+
+```
+
+### Results without age
+
+Model got worse without age-variable. R-squared in new model 0.19.
+Conclusion: continue with attitude, stra and age.
+
+<br>
+<br>
+
+## Diagnostic plots
+
+```{r students8}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/learning2014.txt"
+l_model <- lm(points ~ attitude + stra + age, data=data_stud)
+plot(l_model)
+
+```
+
+
