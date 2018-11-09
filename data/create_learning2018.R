@@ -12,9 +12,10 @@ df <- read.delim("http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt", 
 #--------------
 
 #Select variables gender, age, attitude, deep, stra, surf and point
+#9.11, Some of the columns are missing from data, using what there is
 
 myvars <- c("gender", "Age", "Attitude","Points")
-  #myvars2 <- c("gender", "Age", "Attitude","Deep","Stra","Surf","Points")
+#myvars2 <- c("gender", "Age", "Attitude","Deep","Stra","Surf","Points")
 #Subset
 newdata <- df[myvars]
 #Clear zeros

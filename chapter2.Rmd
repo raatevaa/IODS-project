@@ -196,4 +196,19 @@ plot(l_model)
 
 ```
 
+## Diagnostics interpretation
+
+**Aim** of the diagnostics plots is to explain how well our multilinear model is actually fitting the data.
+
+### Residuals vs Fitted
+
+Scatterplot represents the correlation between model residuals and predicted values. If residuals are small, the model predicts well. On the other hand, if the scatterplot seems sparse, it indicates that model is not giving good predictions. Remember, out model R^2 was only 0.2.
+
+### QQ-plot
+
+Normal Q-Q-plot is a normal probability plot: if errors in model follow normal distribution, line is straight. In our case, there seems to be slight divergence from normal distribution in both ends. Extremely low and high points are harder to predict with the model.
+
+### Residuals vs Leverage
+
+Last plot describes the influence of observations in the model. We can interpret from the plot that obs. 56, 4 and 2 have the most influence to our model. We could go back to the original data and check is there something wrong with it, or make conclusion why these particular students have such a different point - attitude - stra - and age combinations. They are not clearly following the trend.
 
