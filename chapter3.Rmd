@@ -260,7 +260,7 @@ pR2(model)
 
 <br>
 
-**Anova-table** describes, how well our logistic model predicts high use of alcohol when compared to null-model. Null-model uses only intercept value.
+**Anova-table** describes the success of our logistic model to predict students high use of alcohol when compared to null-model. Null-model uses only intercept value.
 
 Table shows that, largest difference to deviance comes from studytime. On contrast, students ambitions to higher education, does make small difference to model (0.27).
 
@@ -288,6 +288,97 @@ exp(cbind("Odds ratio" = coef(model), confint.default(model, level = 0.95)))
 
 <br>
 
-Table above shows odds ratio of each model predictor. Being male increases the probability to have high alcohol consumption by 1.78. All of the studytime terms (2-4) decrease the odds. Odds ratios are based on asymptonic normality.
+Some background information about odds ratios in logistic regression: We have earlier established, that students whose alcohol consumption is higher than certain threshold-value (in our case, class II), we classify those students as "1". On contrary, students who are not using high amounts alcohol are classified as "0". While looking at odds ratios we need to keep in mind this particular detail, since when the odds ratio is greater than 1, it describes a positive relationship. This might be confusing for some people, since high alcohol consumption is not rather "positive" phenomenom in general. On the other hand, an odds ratio less than 1 implies a negative relationship, such as studytime in our data. 
+
+Table above shows odds ratio of each model predictor. Being male increases the probability to have high alcohol consumption by 1.78. All of the studytime terms (2-4) decrease the odds. Students ambitions for higher studies also decrease the odds for high alcohol consumption.  Odds ratios are based on asymptonic normality.
+
+<br>
+
+## Logistic model's predictative power
+
+According to our earlier examinations of the model, I decided to choose variables: sex and studytime as predictors for testing our model. My decision is based on predictor significance (p-values). Proper way to examine model's predictative power is to use different datasets for training the model and actually testing it. That is the reason, I diveded the data earlier: training set consists of 300 student observations and rest of the students (82) are in the testing set. 
+
+```{r alco8}
+library (dplyr); library(ggplot2);
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+train <- alc_data[1:300,]
+test <- alc_data[301:382,]
+train$sex <- factor(train$sex)
+train$studytime <- factor(train$studytime)
+train$high_use <- factor(train$high_use)
+test$sex <- factor(test$sex)
+test$studytime <- factor(test$studytime)
+test$high_use <- factor(test$high_use)
+model <- glm(high_use ~ studytime + sex, data = train, family = "binomial")
+test$model_prob <- predict(model, test, type = "response")
+
+test <- test  %>% mutate(model_pred = 1*(model_prob > .4) + 0,
+                                 high_use_bin = 1*(high_use == "TRUE") + 0)
+                                 
+table(truth = test$high_use_bin, model_pred = test$model_pred)
+test <- test %>% mutate(accurate = 1*(model_pred == high_use_bin))
+sum(test$accurate)/nrow(test)
+
+g <- ggplot(test, aes(x = model_prob, y = high_use))
+g + geom_point(shape=1)
+
+
+
+```
+
+<br>
+
+From the table above we are able to examine the 2x2 tabulation of truth-values versus the model predictions. The total accuracy of our model is 0.73, which means that model gets 73 % of the students high use of alcohol-predictions correct. Thus, **training error is 27 %**.
+
+<br>
+
+### Cross-validation
+
+Model cross-validation is a model validation method, which estimates how well model will perform in in practice. Model's ability to predict is being tested with new data, testing set, in order to find out issues related to overfitting or selection bias. Cross-validation truly puts model into test, since with it we see how well it performs with independent dataset.
+
+<br>
+
+```{r eval=FALSE}
+library (dplyr); library(ggplot2);
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+train <- alc_data[1:300,]
+test <- alc_data[301:382,]
+train$sex <- factor(train$sex)
+train$studytime <- factor(train$studytime)
+train$high_use <- factor(train$high_use)
+test$sex <- factor(test$sex)
+test$studytime <- factor(test$studytime)
+test$high_use <- factor(test$high_use)
+model <- glm(high_use ~ studytime + sex, data = train, family = "binomial")
+test$model_prob <- predict(model, test, type = "response")
+
+test <- test  %>% mutate(model_pred = 1*(model_prob > .4) + 0,
+                                 high_use_bin = 1*(high_use == "TRUE") + 0)
+
+
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+library(boot)
+
+cv <- cv.glm(data = test, cost = loss_func, glmfit = model, K = nrow(test))
+cv$delta[1]
+
+
+
+```
+
+<br>
+
+Delta of CV, which is the average number of wrong predictions in the cross validation:
+
+**[1] 0.1829268**
+
+Low-value in the mean difference between actual and model prediction indicates that our model performs well.
+
+
 
 
