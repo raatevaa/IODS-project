@@ -1,0 +1,293 @@
+---
+title: "Chapter 3"
+output: html_document
+---
+
+# Logistic regression analysis
+## Data description
+
+
+
+Data has 382 observations (students) and 35 variables. Hence, data is a table with 382 rows and 35 columns.
+
+## Variable-names and summary
+
+Data describes students achievement in two Portuguese schools. Attributes give information from student's social status and studying habits. Although, there are also several variables which describe students overall living habits and morality. Data has been provided regarding the student performance in subjects: Mathematics (mat) and Portuguese language (por).
+
+Article:
+P. Cortez and A. Silva. Using Data Mining to Predict Secondary School Student Performance. In A. Brito and J. Teixeira Eds., Proceedings of 5th FUture BUsiness TEChnology Conference (FUBUTEC 2008) pp. 5-12, Porto, Portugal, April, 2008, EUROSIS, ISBN 978-9077381-39-7. 
+
+
+```{r students}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+summary(alc_data)
+```
+
+<br>
+
+## Choice of four interesting data variables
+
+<br>
+
+**1.** Sex - student's sex (binary: 'F' - female or 'M' - male)
+
+It's well-known, that males tend to drink more alcohol than women (especially in "macho-cultures"). **Hypothesis:** Alcohol consumption is generally higher in "M"-class, thus **being male increases the odds to use high amounts of alcohol**.  
+
+<br>
+
+**2.** Studytime - weekly study time (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours)
+
+Students, who are willing to study and work hard, do not generally have time for drinking. Drinking alcohol decreases the students moral to study. **Hypothesis:**: Alcohol consumption decreases when studytime rises. **High studytime decreases the odds to alcohol consumption.** 
+
+<br>
+
+**3.** Fjob - father's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
+
+I suggest, that father's job and social status has strong correlation between childrens achievements. Father's alcohol consumption might have even clearer correlation between students drinking habits: child learns from example! **Hypothesis:** As the fathers social status gets higher, less the children are drinking and getting other bad habits. **Father's job decreases the students odds to high alcohol consumption**.
+
+<br>
+
+**4**. Higher - wants to take higher education (binary: yes or no) 
+
+When students are ambitious with their studies, they are less likely spending their time drinking alcohol. **Hypothesis: answering "yes" in this variable decreases the odds to drinking alcohol**.
+
+<br>
+
+## Data visualization
+
+### Attiributes overview 
+
+
+```{r students2}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+library(tidyr); library(dplyr); library(ggplot2)
+gather(alc_data) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free")+ geom_bar()
+```
+
+
+<br>
+
+### Choise of variables: Sex
+
+```{r students3}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+library(tidyr); library(dplyr); library(ggplot2)
+ggplot() + 
+  geom_density(data=alc_data, aes(x=alc_use, group=sex, fill=sex),alpha=0.5, adjust=2) + 
+  xlab("Alcohol use (1-5)") +
+  ylab("Density")
+```
+
+### Crosstab
+
+```{r students31}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+alc_data$sex <- factor(alc_data$sex)
+library(tidyr); library(dplyr); library(ggplot2); library(descr)
+CrossTable(alc_data$high_use, alc_data$sex)
+```
+
+<br>
+
+There seems to be somewhat clear division in alcohol consumption between males and females.Females alcohol consumption is focused on classes 1 and 2, when males drinking is more divided through all the consumption classes. It seems to be really rare to find a portuguese females who report themselves into alc use classes 4-5.
+
+<br>
+
+### Choise of variables: Studytime
+
+```{r students4}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+alc_data$studytime <- factor(alc_data$studytime)
+library(tidyr); library(dplyr); library(ggplot2)
+ggplot() + 
+  geom_density(data=alc_data, aes(x=alc_use, group=studytime, color=studytime),alpha=1, adjust=2, size=2) + 
+  xlab("Alcohol use (1-5)") +
+  ylab("Density")
+```
+
+### Crosstab
+
+```{r students41}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+alc_data$studytime <- factor(alc_data$studytime)
+library(tidyr); library(dplyr); library(ggplot2); library(descr)
+CrossTable(alc_data$high_use, alc_data$studytime)
+```
+
+<br>
+
+Studytime has correlation to alcohol consumption: as the studytime rises, the probability to use alcohol decreases. Students who use exceptionally great amounts of time studying (class 3 & 4) seem to be using almost no alcohol, mostly classes 1-2. Fancy thing is, that students who are in studytime class 3 are not participating in heavy drinking (class 5). These people could be described as "middle road walkers".
+
+<br>
+
+### Choise of variables: Father's job
+
+```{r students5}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+alc_data$Fjob <- factor(alc_data$Fjob)
+library(tidyr); library(dplyr); library(ggplot2)
+ggplot() + 
+  geom_density(data=alc_data, aes(x=alc_use, group=Fjob, color=Fjob),alpha=1, adjust=2, size=2) + 
+  xlab("Alcohol use (1-5)") +
+  ylab("Density")
+```
+
+### Crosstab
+
+```{r students51}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+alc_data$Fjob <- factor(alc_data$Fjob)
+library(tidyr); library(dplyr); library(ggplot2); library(descr)
+CrossTable(alc_data$high_use, alc_data$Fjob)
+```
+
+<br>
+
+Contrary to my earlier hypothesis, father's job does not seem to have major influence on student's alcohol consumption. All of the job-classes are divided fairly identical. Interesting feature in father's job attribute is the "health"-class, which has high altitude in alcohol use 1. On the other hand, there is minor peak in classes 3-4. This could indicate that students whose fathers' work at 'health' care related -jobs tend to use much less alcohol in general, but there are few rebellious students, who stand against their fathers' health doctrines.
+
+<br>
+
+### Choise of variables: Higher education ambitions
+
+```{r students6}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+alc_data$higher <- factor(alc_data$higher)
+library(tidyr); library(dplyr); library(ggplot2)
+ggplot() + 
+  geom_density(data=alc_data, aes(x=alc_use, group=higher, color=higher),alpha=1, adjust=2, size=2) + 
+  xlab("Alcohol use (1-5)") +
+  ylab("Density")
+```
+
+### Crosstab
+
+```{r students61}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+alc_data$higher <- factor(alc_data$higher)
+library(tidyr); library(dplyr); library(ggplot2); library(descr)
+CrossTable(alc_data$high_use, alc_data$higher)
+```
+
+
+<br>
+
+Students ambitions for higher education, does indeed seem to have slight influence on students drinking habits: Higher education seem to attract students who are not using alcohol as much as students who do not have motivation for higher education. Alc. use distribution inside group: "no", is quite incoherent, and divided more evenly than group: "yes". It seems that there are students who do not use alcohol but do not either have plans for higher education.
+
+<br>
+<br>
+
+## Logistic model
+
+Logistic regression is traditionally used for modelling regression between predictors (continuous, categorical or a mix of both) and categorical variable, y, which is binary (0/1). Model describes the probability (or odds) for variable "y", to get value = "1", with set of predictors. In our case, we are modelling the probability for student to have high alcohol consumption (1), with predictors: sex, studytime, father's job and ambition for higher education.
+
+### Training & Test datasets
+
+<br>
+
+Before applying logistic regression model, we need to split the data into training and testing data. I decided to choose first 300 students as training set for the model. Thus, 82 reimaining students are left for testing the model.
+
+
+```{r students7}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+train <- alc_data[1:300,]
+test <- alc_data[301:382,]
+```
+trainset = [1] 300  35
+
+testset = [1] 82 35
+
+<br>
+
+### Building model
+
+<br>
+
+```{r students71}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+train <- alc_data[1:300,]
+train$sex <- factor(train$sex)
+train$studytime <- factor(train$studytime)
+train$Fjob <- factor(train$Fjob)
+train$higher <- factor(train$higher)
+train$high_use <- factor(train$high_use)
+model <- glm(high_use ~ sex + studytime + Fjob + higher,family=binomial(link='logit'),data=train)
+summary(model)
+```
+
+### Summary of the model
+
+From logistic model summary-table we are able to recognize that predictors: sex and studytime have statistical significance in the model. Although, studytime has significance only inside two of it's terms (3 and 4).
+
+**Sex:** According to our model, being male as student increases the odds for high alcohol use by 0.57, when compared to women. P-value is slightly under the 0.05 treshold-value, **0.04183**. 
+
+**Studytime:** Increasing studytime does indeed lower your odds to have bad drinking habits: however, studytime truly begins to decrease odds when student moves from term 2 to term 3. To put it simple, **students who study 5 to 10 hours or more on weekly basis, have considerably smaller odds to have high alcohol use.** Studytime 3 p-value is 0.00699 (lowest value in the model) and correspondingly studytime 4, 0.03344.
+
+**Father's job:** No statistical significance in any of the predictor terms. However, it seems clear that, students whose fathers are working as teachers are less likely to become alcoholists.
+
+**Pursue for higher education:** No statistical significance, but having ambition for higher education lowers the odds for high alcohol use by -0.29.
+
+<br>
+
+### Anova-table and McFadden R2 -index
+
+```{r students72}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+train <- alc_data[1:300,]
+train$sex <- factor(train$sex)
+train$studytime <- factor(train$studytime)
+train$Fjob <- factor(train$Fjob)
+train$higher <- factor(train$higher)
+train$high_use <- factor(train$high_use)
+model <- glm(high_use ~ sex + studytime + Fjob + higher,family=binomial(link='logit'),data=train)
+
+anova(model)
+library(pscl)
+pR2(model)
+```
+
+<br>
+
+**Anova-table** describes, how well our logistic model predicts high use of alcohol when compared to null-model. Null-model uses only intercept value.
+
+Table shows that, largest difference to deviance comes from studytime. On contrast, students ambitions to higher education, does make small difference to model (0.27).
+
+Furthermore, model fit can be assessed with McFadden's pseudo R^2-value, which gives only 0.08 for our model.
+
+
+The difference between the null deviance and the residual deviance shows how our model is doing against the null model (a model with only the intercept).
+
+<br>
+
+### Coefficients as odds ratios and confidence intervals
+
+```{r students73}
+url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
+alc_data <- read.delim(url, sep=",")
+train <- alc_data[1:300,]
+train$sex <- factor(train$sex)
+train$studytime <- factor(train$studytime)
+train$Fjob <- factor(train$Fjob)
+train$higher <- factor(train$higher)
+train$high_use <- factor(train$high_use)
+model <- glm(high_use ~ sex + studytime + Fjob + higher,family=binomial(link='logit'),data=train)
+exp(cbind("Odds ratio" = coef(model), confint.default(model, level = 0.95)))
+```
+
+<br>
+
+Table above shows odds ratio of each model predictor. Being male increases the probability to have high alcohol consumption by 1.78. All of the studytime terms (2-4) decrease the odds. Odds ratios are based on asymptonic normality.
+
+
