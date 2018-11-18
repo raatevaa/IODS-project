@@ -18,7 +18,7 @@ Article:
 P. Cortez and A. Silva. Using Data Mining to Predict Secondary School Student Performance. In A. Brito and J. Teixeira Eds., Proceedings of 5th FUture BUsiness TEChnology Conference (FUBUTEC 2008) pp. 5-12, Porto, Portugal, April, 2008, EUROSIS, ISBN 978-9077381-39-7. 
 
 
-```{r students}
+```{r alco}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 summary(alc_data)
@@ -59,7 +59,7 @@ When students are ambitious with their studies, they are less likely spending th
 ### Attiributes overview 
 
 
-```{r students2}
+```{r alco2}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 library(tidyr); library(dplyr); library(ggplot2)
@@ -71,7 +71,7 @@ gather(alc_data) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free")+ ge
 
 ### Choise of variables: Sex
 
-```{r students3}
+```{r alco3}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 library(tidyr); library(dplyr); library(ggplot2)
@@ -83,7 +83,7 @@ ggplot() +
 
 ### Crosstab
 
-```{r students31}
+```{r alco31}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 alc_data$sex <- factor(alc_data$sex)
@@ -99,7 +99,7 @@ There seems to be somewhat clear division in alcohol consumption between males a
 
 ### Choise of variables: Studytime
 
-```{r students4}
+```{r alco4}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 alc_data$studytime <- factor(alc_data$studytime)
@@ -112,7 +112,7 @@ ggplot() +
 
 ### Crosstab
 
-```{r students41}
+```{r alco41}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 alc_data$studytime <- factor(alc_data$studytime)
@@ -128,7 +128,7 @@ Studytime has correlation to alcohol consumption: as the studytime rises, the pr
 
 ### Choise of variables: Father's job
 
-```{r students5}
+```{r alco5}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 alc_data$Fjob <- factor(alc_data$Fjob)
@@ -141,7 +141,7 @@ ggplot() +
 
 ### Crosstab
 
-```{r students51}
+```{r alco51}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 alc_data$Fjob <- factor(alc_data$Fjob)
@@ -157,7 +157,7 @@ Contrary to my earlier hypothesis, father's job does not seem to have major infl
 
 ### Choise of variables: Higher education ambitions
 
-```{r students6}
+```{r alco6}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 alc_data$higher <- factor(alc_data$higher)
@@ -170,7 +170,7 @@ ggplot() +
 
 ### Crosstab
 
-```{r students61}
+```{r alco61}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 alc_data$higher <- factor(alc_data$higher)
@@ -197,7 +197,7 @@ Logistic regression is traditionally used for modelling regression between predi
 Before applying logistic regression model, we need to split the data into training and testing data. I decided to choose first 300 students as training set for the model. Thus, 82 reimaining students are left for testing the model.
 
 
-```{r students7}
+```{r alco7}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 train <- alc_data[1:300,]
@@ -213,7 +213,7 @@ testset = [1] 82 35
 
 <br>
 
-```{r students71}
+```{r alco71}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 train <- alc_data[1:300,]
@@ -242,7 +242,7 @@ From logistic model summary-table we are able to recognize that predictors: sex 
 
 ### Anova-table and McFadden R2 -index
 
-```{r students72}
+```{r alco72}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 train <- alc_data[1:300,]
@@ -273,7 +273,7 @@ The difference between the null deviance and the residual deviance shows how our
 
 ### Coefficients as odds ratios and confidence intervals
 
-```{r students73}
+```{r alco73}
 url = "http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt"
 alc_data <- read.delim(url, sep=",")
 train <- alc_data[1:300,]
