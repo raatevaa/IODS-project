@@ -69,7 +69,7 @@ corrplot(as.matrix(res), method="circle")
 <br>
 <br>
 
-# Comments on data
+## Comments on data
 
 ### Gender
 There seems to be slight variation in points between the genders:
@@ -137,9 +137,9 @@ Strategic approach (Stra) correlates positively between all the variables, excep
 <br>
 <br>
 
-## Fitting regression model
+# Fitting regression model
 
-### Model parameters
+## Model parameters
 
 I chose three explanatory variables which are:
 
@@ -196,7 +196,7 @@ plot(l_model)
 
 ```
 
-### Diagnostics interpretation
+## Diagnostics interpretation
 
 **Aim** of the diagnostics plots is to explain how well our multilinear model is actually fitting the data.
 

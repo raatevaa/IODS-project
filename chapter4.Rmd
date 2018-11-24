@@ -1,0 +1,383 @@
+---
+title: "Chapter 4"
+output: html_document
+---
+
+# Data clustering and classification 
+
+This exercise focuses on how to classify and cluster data into categories according to characteristics of the data. Clustering methods try to find the similarities from the data and on the other what are the attributes which divide data?
+
+<br>
+
+## Data overview
+
+<br>
+
+```{r boston1}
+library(MASS)
+
+data(Boston)
+dim(Boston)
+head(Boston)
+
+```
+
+<br>
+
+"Boston" -dataset describes social and environmental characteristics of Boston city.
+
+**Boston data** has 506 rows (observations) and 14 columns (attributes). 
+
+### Variable explanations
+
+- CRIM - per capita crime rate by town
+
+- ZN - proportion of residential land zoned for lots over 25,000 sq.ft.
+
+- INDUS - proportion of non-retail business acres per town.
+
+- CHAS - Charles River dummy variable (1 if tract bounds river; 0 otherwise)
+
+- NOX - nitric oxides concentration (parts per 10 million)
+
+- RM - average number of rooms per dwelling
+
+- AGE - proportion of owner-occupied units built prior to 1940
+
+- DIS - weighted distances to five Boston employment centres
+
+- RAD - index of accessibility to radial highways
+
+- TAX - full-value property-tax rate per $10,000
+
+- PTRATIO - pupil-teacher ratio by town
+
+- B - 1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town
+
+- LSTAT - % lower status of the population
+
+- MEDV - Median value of owner-occupied homes in $1000's
+
+
+***Explanations https://www.cs.toronto.edu/~delve/data/boston/bostonDetail.html.***
+
+### Variable visualization
+
+```{r boston2, fig.height = 10, fig.width = 10, fig.align = "center"}
+library(MASS); library("GGally")
+data(Boston)
+Boston$chas <- factor(Boston$chas)
+lowerFn <- function(data, mapping, ...) {
+  p <- ggplot(data = data, mapping = mapping) +
+    geom_point(color = 'blue', alpha=0.3, size=1) +
+    geom_smooth(color = 'black', method='lm', size=1,...)
+  p
+}
+
+g <- ggpairs( 
+  data = Boston,
+  lower = list(
+    continuous =  wrap(lowerFn) #wrap("smooth", alpha = 0.3, color = "blue", lwd=1) 
+  ),
+  upper = list(continuous = wrap("cor", size = 4))
+)
+g <- g + theme(
+  axis.text = element_text(size = 4),
+  axis.title = element_text(size = 4),
+  legend.background = element_rect(fill = "white"),
+  panel.grid.major = element_line(colour = NA),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(fill = "grey95")
+)
+print(g, bottomHeightProportion = 0.5, leftWidthProportion = .5)
+```
+
+<br>
+
+### Summary
+
+```{r boston3}
+library(MASS);
+data(Boston)
+summary(Boston)
+```
+
+<br> 
+
+### Data interpretation
+
+The data consists mainly of continuous variables; only categorical variable is "CHAS" -attribute, which gets binary values (0/1). CHAS equals to 1 if tract bounds Charles River, 0 otherwise. 
+Other variables are ratios and or proportions which describe the city districts: social, economical and environmental factors affecting the price of houses and apartments in Boston. 
+From graphical overview, we are able to recognize several strong correlations between the variables: in this interpretation, I will be discussing only the major trends in the data.
+
+**The strongest correlation** in the data can be found between MEDV (house price) and LSTAT (% lower status of pop.) - correlation  of -0.74. As the lower status pop. increases the median housing price decreases rapidly.
+
+**RM (average number of rooms per dwelling) has strong positive correlation (0.70)**  with MEDV. This is also pretty obvious correlation - more rooms (and space), more costly housing.
+**PRATIO has strong negative correlation (-0.51)** with MEDV. PRATIO describes the pupil -teacher ratio by town. Attribute reflects the overall social status in the town: there is often less funds to offer for schools at less popular and poorer parts of city - class-sizes tend to grow. At socially "better" areas there are private schools, which have lower PRATIO.
+
+ **Other correlations between the study variables worth to mention:** AGE (proportion of owner-occupied units built prior to 1940) of the houses seems to correlate between LSTAT and DIS (weighted distances to five Boston employment centres). Lower status population is living in older houses (prior -40's), because they can't simply afford new one and houses at that age are located far from Boston employment centres.  
+ 
+<br>
+
+## Standardizing data
+
+Scale-function standardizes data's each observation by column average and standard deviatian. 
+
+- Scaled_value = value - col_mean / col_std
+
+<br>
+
+```{r boston4}
+library(MASS);
+data(Boston)
+boston_scaled <- scale(Boston)
+summary(boston_scaled)
+boston_scaled <- as.data.frame(boston_scaled)
+```
+
+<br> 
+
+From summary we are able to recognize the result of standardization: Min. values in in each variable are negative, since all the values below mean of the column are now below zero. Also, higher the deviation in col. - smaller the min. value is. On the other hand, the max. is higher if there is small deviation in data. Mean value is always 0 in each variable.
+
+<br>
+
+### Creating categorical variable from CRIM
+
+<br>
+
+```{r boston5}
+library(MASS); library(dplyr, warn.conflicts = FALSE)
+data(Boston)
+boston_scaled <- scale(Boston)
+boston_scaled <- as.data.frame(boston_scaled)
+bins <- quantile(boston_scaled$crim)
+
+# create a categorical variable 'crime'
+labels <- c("low","med_low","med_high","high")
+crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE, labels = labels)
+levels(crime)
+table(crime)
+# remove original crim from the dataset
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+
+# add the new categorical value to scaled data
+boston_scaled <- data.frame(boston_scaled, crime)
+
+```
+
+<br>
+
+In the code above, CRIM -varible has been transformed into categorical (4-levels) using the quantiles of standardized CRIM. We basically divided the data into 4 groups, where first group holds values under the lower quantile (0.25), second group values between lower and mean (0.25-0.5) and so on. I renamed the levels into more appropriate. Since we standardized the data earlier, all the classes have exactly same amount of observations (low and high has 127, because data cant be divided with 4 equally)
+
+New 
+
+<br>
+
+## Linear discriminant analysis (training and test-set inc.)
+
+In order to create proper predictative models, we need to split our data into training and testing datasets. In our case, we split our data into training (80 %) and test-sets (20 %) with random sample and remove crime-variable from test-set. Next we fit the data with discriminant analysis where crime is target variable and all the other variables in the dataset as predictor variables. LDA is a data classification method, where we aim to find linear combination of variables which separate target variable classes (crime-levels).
+
+<br>
+
+```{r boston6, fig.height = 10, fig.width = 10, fig.align = "center"}
+# boston_scaled is available
+library(MASS); library(dplyr, warn.conflicts = FALSE)
+data(Boston)
+boston_scaled <- scale(Boston)
+boston_scaled <- as.data.frame(boston_scaled)
+bins <- quantile(boston_scaled$crim)
+labels <- c("low","med_low","med_high","high")
+crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE, labels = labels)
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+boston_scaled <- data.frame(boston_scaled, crime)
+
+
+# number of rows in the Boston dataset 
+n <- dim(boston_scaled)[1]
+
+# choose randomly 80% of the rows
+ind <- sample(n,  size = n * 0.8)
+
+# create train set
+train <- boston_scaled[ind,]
+
+# create test set 
+test <- boston_scaled[-ind,]
+
+# save the correct classes from test data
+correct_classes <- test$crime
+# remove the crime variable from test data
+test <- dplyr::select(test, -crime)
+
+
+# linear discriminant analysis
+lda.fit <- lda(crime ~ ., data = train)
+
+# print the lda.fit object
+lda.fit
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+# target classes as numeric
+classes <- as.numeric(train$crime)
+
+# plot the lda results
+plot(lda.fit, dimen = 2)
+lda.arrows(lda.fit, myscale = 2)
+```   
+
+<br>
+
+### LDA predictions
+
+<br>
+
+```{r boston7}
+# boston_scaled is available
+library(MASS); library(dplyr, warn.conflicts = FALSE)
+data(Boston)
+boston_scaled <- scale(Boston)
+boston_scaled <- as.data.frame(boston_scaled)
+bins <- quantile(boston_scaled$crim)
+labels <- c("low","med_low","med_high","high")
+crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE, labels = labels)
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+boston_scaled <- data.frame(boston_scaled, crime)
+n <- dim(boston_scaled)[1]
+ind <- sample(n,  size = n * 0.8)
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+correct_classes <- test$crime
+test <- dplyr::select(test, -crime)
+lda.fit <- lda(crime ~ ., data = train)
+classes <- as.numeric(train$crime)
+
+
+# predict classes with test data
+lda.pred <- predict(lda.fit, newdata = test)
+
+# cross tabulate the results
+table(correct = correct_classes, predicted = lda.pred$class)
+
+```   
+
+<br>
+
+Table above shows that our model is predicting crime-rates fairly well: it seems to predict the lowest and highest proportions really well. On contrary, model struggles with medium classes. Earlier LDA-plot shows that there exists med-low and med-high points near the low- and high -class concentrations. It seems data should be categorized into low/high -classes instead on 4.
+
+<br>
+
+### Clustering the data (euclidean dist.)
+
+Calculating imaginary distance between the observations is one method to sort data: in the code I standardize the original data and calculate euclidean distance -matrix and later the manhattan distance -matrix. Matrices has pairwise distances between observations (city districts) and it would be too heavy to summarize properly. I have printed the short, summary-tables with descriptive statistical variables. It seems that manhattan distance (below) has generally longer distances: it's pretty obvious, since in manhattan distance, we are not choosing the "straight path". (More from https://www.quora.com/What-is-Manhattan-Distance)
+
+<br>
+
+```{r boston8}
+library(MASS); library(dplyr, warn.conflicts = FALSE)
+data(Boston)
+boston_scaled <- scale(Boston)
+boston_scaled <- as.data.frame(boston_scaled)
+
+# euclidean distance matrix
+dist_eu <- dist(boston_scaled)
+
+# look at the summary of the distances
+summary(dist_eu)
+
+# manhattan distance matrix
+dist_man <- dist(boston_scaled, method ="manhattan")
+
+# look at the summary of the distances
+summary(dist_man)
+```
+
+
+### Clustering the data (Kmeans, clusters = 4)
+
+Kmeans -classification is one  of the most common function to categorize data. It's been used in many fields, such as image analysis: pixel values in image can be clustered fairly easily with Kmeans. Success of the method relies on many aspects such as the homogenity of the the groups. Below I calculate Kmeans-clustering for standardized Boston -data, with 4 clusters.
+
+
+```{r boston9, fig.height = 10, fig.width = 10, fig.align = "center"}
+library(MASS); library(dplyr, warn.conflicts = FALSE)
+data(Boston)
+boston_scaled <- scale(Boston)
+boston_scaled <- as.data.frame(boston_scaled)
+# k-means clustering
+km <-kmeans(Boston, centers = 4)
+
+# plot the Boston dataset with clusters
+pairs(Boston, col = km$cluster,main="Clusters = 4")
+pairs(Boston[6:10], col = km$cluster,main="Clusters = 4")
+```
+
+<br>
+
+### Clustering the data (Kmeans, clusters = 3, 2)
+
+While observing the pairs-plot, it seems rather clear, that clustering data with four groups is not providing very good results: it looks like in most variables 2 groups would do the trick. Lets try with 3 clusters and then by 2.
+
+```{r boston10, fig.height = 10, fig.width = 10, fig.align = "center"}
+library(MASS); library(dplyr, warn.conflicts = FALSE)
+data(Boston)
+boston_scaled <- scale(Boston)
+boston_scaled <- as.data.frame(boston_scaled)
+# k-means clustering
+km <-kmeans(Boston, centers = 3)
+
+# plot the Boston dataset with clusters
+pairs(Boston, col = km$cluster, main="Clusters = 3")
+pairs(Boston[6:10], col = km$cluster, main="Clusters = 3")
+
+km <-kmeans(Boston, centers = 2)
+# plot the Boston dataset with clusters
+pairs(Boston, col = km$cluster, main="Clusters = 2")
+pairs(Boston[6:10], col = km$cluster, main="Clusters = 2")
+```
+
+<br>
+
+### Finding the optimal number of clusters
+
+For the last part, we will use the within cluster sum of squares (WCSS) to optimize the number of clusters in data. Optimal number is found when the WCSS-value dives in cluster - WCSS -plot. Method produces different solution every time, since function sets it's "seed-points" randomly.
+
+<br>
+
+```{r boston11, fig.height = 10, fig.width = 10, fig.align = "center"}
+library(MASS); library(dplyr, warn.conflicts = FALSE)
+data(Boston)
+boston_scaled <- scale(Boston)
+boston_scaled <- as.data.frame(boston_scaled)
+# MASS, ggplot2 and Boston dataset are available
+set.seed(123)
+
+# determine the number of clusters
+k_max <- 10
+
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(Boston, k)$tot.withinss})
+
+# visualize the results
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+
+# k-means clustering
+km <-kmeans(Boston, centers = 2)
+
+# plot the Boston dataset with clusters
+pairs(Boston, col = km$cluster)
+```
+
+<br>
+
+## Conclusion
+### Optimal number of clusters = 2
+
+Cluster-WCSS -plot shows that the optimal number of clusters seems to be at 2. Line takes radical drop at that point, adding clusters does not seem to add value to clustering. 
+
+<br>
+
