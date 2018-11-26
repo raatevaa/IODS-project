@@ -5,15 +5,12 @@
 data1 <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human_development.csv", stringsAsFactors = F)
 data2 <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/gender_inequality.csv", stringsAsFactors = F, na.strings = "..")
 
-# Explore the datasets: see the structure and dimensions of the data. 
 str(data1)
-str(data2)
-
-# Create summaries of the variables. 
 summary(data1)
+
+str(data2)
 summary(data2)
 
-# Rename the variables with (shorter) descriptive names
 colnames(data1)[3] <- "hdi"
 colnames(data1)[4] <- "Life.expectancy"
 colnames(data1)[5] <- "edu_expectancy"
