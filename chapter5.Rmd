@@ -1,0 +1,133 @@
+---
+title: "Chapter 5"
+output: html_document
+---
+
+# Dimensionality reduction techniques
+
+Statistical problems are often multidimensional: in order to understand different phenomena, it is necessary to "chop" variables into smaller pieces. This is what dimensionality reduction techniques aims for - we take original data variables and transform them into few components that collect together as much variance as possible from the original data. Thus, components make data interpretation, plotting etc. easier and more informative.
+
+
+<br>
+
+## Data overview
+
+<br>
+
+```{r human}
+human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt",sep  =",", header = T)
+
+dim(human)
+head(human)
+str(human)
+
+```
+
+<br>
+
+**Human -data** consists of 9 attributes and 195 observations (countries). Varibales describe countries "Human development index": The Human Development Index (HDI) is a summary measure of average achievement in key dimensions of human development: a long and healthy life, being knowledgeable and have a decent standard of living. The HDI is the geometric mean of normalized indices for each of the three dimensions. (http://hdr.undp.org)
+
+<br>
+
+### Variables
+
+- Edu2.FM (Education index (females))
+
+- Labo.FM (Labour force participation rate (females))
+
+- Edu.Exp (Expected years at schooling)
+
+- Life.Exp (Life expectancy index)
+
+- GNI (Gross national income ($))
+
+- Mat.Mor (Material morality)
+
+- Ado.Birth (Adolescent birth rate)
+
+- Parli.F (Parliamentary representation (females))
+
+
+<br>
+
+### Data visualization
+
+<br>
+
+```{r human1, fig.height = 10, fig.width = 10, fig.align = "center"}
+library("GGally")
+human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt",sep  =",", header = T)
+human = transform(human, GNI = as.numeric(GNI))
+human = transform(human, Mat.Mor = as.numeric(Mat.Mor))
+
+
+lowerFn <- function(data, mapping, ...) {
+  p <- ggplot(data = data, mapping = mapping) +
+    geom_point(color = 'blue', alpha=0.3, size=1) +
+    geom_smooth(color = 'black', method='lm', size=1,...)
+  p
+}
+
+g <- ggpairs( 
+  data = human,
+  lower = list(
+    continuous =  wrap(lowerFn) #wrap("smooth", alpha = 0.3, color = "blue", lwd=1) 
+  ),
+  upper = list(continuous = wrap("cor", size = 4))
+)
+g <- g + theme(
+  axis.text = element_text(size = 4),
+  axis.title = element_text(size = 4),
+  legend.background = element_rect(fill = "white"),
+  panel.grid.major = element_line(colour = NA),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(fill = "grey95")
+)
+print(g, bottomHeightProportion = 0.5, leftWidthProportion = .5)
+```
+
+<br>
+
+### Data interpretation
+
+**Correlations:**
+
+For the sake of clarity I chose one attribute which clearly correlates with other data variables and therefore explains the data well: Ado.Birth
+
+**The adolescent birth rate** is the annual number of live births to adolescent women per 1,000 adolescent women. The adolescent birth rate is also referred to as the age-specific fertility rate for women aged 15-19
+
+
+- Edu2.FM: Strong negative correlation (-0.53) - countries, where women have children at very young age do not participate in education process (at all).
+
+- Edu.exp: Strong negative correlation (-0.70) - the expected years of schooling is very low if there is high adolescent birth rate. Children (males, females) are not participating in education process, because they reproduce quickly after puberty.
+
+- Life.exp: Strong negative correlation (-0.73) - expected individual lifespan decreases as adolescent birth rate increases. There are many issues related - having children without stable incomes and education does not predict good starting point for offspring.
+
+- GNI: trong negative correlation (-0.56) - GNI (country incomes) decrease while Ado.Birth increases: no education - no incomes. 
+
+- Mat.Mor (def. The people of a society share a standard dignity through high morals making the moral fabric a keystone; keeping the arch of society and the morals it holds high-together. https://www.collinsdictionary.com/submission/8889/Moral+fabric) - positive correlation, adolescent birth rate increases Mat.Mor (does not make sense, I guess we should think that as Mat.Mor increases the moral of the country decreases)
+
+<br>
+
+## Principal component analysis (PCA), unstandardized data
+
+Next we will perform PCA-analysis for the HDI-dataset. We will be solving the components that capture most of the variability in the data.
+
+First we perform PCA with unstandardized data.
+
+```{r human2, fig.height = 10, fig.width = 10, fig.align = "center"}
+human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt",sep  =",", header = T)
+
+human = transform(human, GNI = as.numeric(GNI))
+human = transform(human, Mat.Mor = as.numeric(Mat.Mor))
+
+pca_human <- prcomp(human, scale=T)
+
+biplot(pca_human)
+
+
+```
+
+
+
+
