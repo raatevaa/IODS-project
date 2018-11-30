@@ -109,7 +109,9 @@ For the sake of clarity I chose one attribute which clearly correlates with othe
 
 <br>
 
-## Principal component analysis (PCA), unstandardized data
+## Principal component analysis (PCA) 
+
+### 1. Unstandardized data
 
 Next we will perform PCA-analysis for the HDI-dataset. We will be solving the components that capture most of the variability in the data.
 
@@ -117,17 +119,170 @@ First we perform PCA with unstandardized data.
 
 ```{r human2, fig.height = 10, fig.width = 10, fig.align = "center"}
 human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt",sep  =",", header = T)
-
 human = transform(human, GNI = as.numeric(GNI))
 human = transform(human, Mat.Mor = as.numeric(Mat.Mor))
+pca_human <- prcomp(human, scale=FALSE)
+print("The variability captured by the principal components:")
+pca_human
+biplot(pca_human)
+```
 
-pca_human <- prcomp(human, scale=T)
+<br>
 
+### 2. Standardized data
+
+Next we will run PCA and plot results with standardized data.
+
+Definition of scale: "log simply takes the logarithm (base e, by default) of each element of the vector.
+scale, with default settings, will calculate the **mean** and **standard deviation of the entire vector**, then "scale" each element by those values **by subtracting the mean and dividing by the sd**." (https://stackoverflow.com/questions/20256028/understanding-scale-in-r)
+
+<br>
+
+```{r human3, fig.height = 10, fig.width = 10, fig.align = "center"}
+human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt",sep  =",", header = T)
+human = transform(human, GNI = as.numeric(GNI))
+human = transform(human, Mat.Mor = as.numeric(Mat.Mor))
+human_std <- scale(human)
+pca_human <- prcomp(human_std, scale=T)
+print("The variability captured by the principal components:")
+pca_human
 biplot(pca_human)
 
 
 ```
 
+<br>
+
+### PCA - Conclusion
+
+As we can recognize from figures above, PCA-analysis on unstandardized data can produce unwanted results - mainly because of variables with the highest sample variances tend to be emphasized in the first few principal components. Thus, principal component analysis using the covariance function should only be considered if all of the variables have the same units of measurement. 
+
+- Results on PCA-analysis depend on measurement scales: it is recommended to standardize data before analysis. In our case, GNI (country income, values in thousands) over-emphasizes the data.
+
+<br>
+
+## PCA -visualization continued
+
+```{r, human4, fig.height = 10, fig.width = 10, fig.align = "center"}
+library(dplyr); library(factoextra)
+human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt",sep  =",", header = T)
+human = transform(human, GNI = as.numeric(GNI))
+human = transform(human, Mat.Mor = as.numeric(Mat.Mor))
+human_std <- scale(human)
+pca_human <- prcomp(human_std, scale=T)
+fviz_eig(pca_human)
+s <- summary(pca_human)
+print("Summary of PCA-analysis")
+s
+pca_pr <- round(1*s$importance[2, ], digits = 2)
+print("The variability captured by the principal components:")
+pca_pr
+#str(as.data.frame(as.table(human_std)))
+fviz_pca_var(pca_human, col.var="contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE # Avoid text overlapping
+             )
+# Contributions of variables to PC1
+fviz_contrib(pca_human, choice = "var", axes = 1, top = 10)
+# Contributions of variables to PC2
+fviz_contrib(pca_human, choice = "var", axes = 2, top = 10)
+pca_pr = pca_pr*100
+pc_lab = paste0(names(pca_pr), " (", pca_pr, "%)")
+biplot(pca_human, cex = c(0.8, 1), col = c("grey40", "red"), xlab = pc_lab[1], ylab = pc_lab[2])
+```
+
+<br>
+
+From figure above, first principal component (PC1) explains 54 % of the variance in data. Second component (PC2) explains much less, total 16 %.
+
+### Personal interpretation of 2 principal component dimensions
+
+As we can see from the biplot above, it seems that data can be divided into three variable groups, which are:
+
+1. Edu.Exp, GNI, Edu2.FM, LIfe.exp
+
+2. Parli.F, Labo.FM
+
+3. Mat.Mor, Abo.Birth
+
+If we have to choose two data dimensions (variables) to explain the data, I would choose Life.Exp and Mat.Mor, since they have the largest contribution in 1st. principal component (bar-chart above). Although, I believe second dimension could be taken from second component, such as Labo.FM, which contributes over 50 %.
+
+<br>
+
+## Exercise with Tea-dataset
+
+### Data summary
+
+```{r, tea}
+library(FactoMineR);library(dplyr);library(MASS)
+data(tea)
+keep <- c("Tea", "How", "how", "sugar", "where", "lunch")
+tea_time <- dplyr::select(tea, keep)
+str(tea_time)
+summary(tea_time)
+```
+
+
+<br>
+
+Tea-data has 300 observations and originally 36 variables; we chose 6 variables for further examination. Every attribute is categorical: 2 are binary others have 3-4 classes.
+
+<br>
+
+### Data visualization 
+
+```{r, tea1, fig.height = 10, fig.width = 10, fig.align = "center"}
+library(FactoMineR);library(MASS);library(dplyr);library(tidyr);library(ggplot2)
+data(tea)
+keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+tea_time <- dplyr::select(tea, keep_columns)
+gather(tea_time) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar()
+```
+
+
+<br>
+
+### Multiple correspondence analysis
+
+
+```{r, tea2, fig.height = 10, fig.width = 10, fig.align = "center"}
+library(FactoMineR);library(MASS);library(dplyr);library(tidyr);library(ggplot2);library("factoextra")
+data(tea)
+keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+tea_time <- dplyr::select(tea, keep_columns)
+mca <- MCA(tea_time, graph = FALSE)
+summary(mca)
+#
+fviz_screeplot(mca, addlabels = TRUE, ylim = c(0, 45))
+fviz_contrib(mca, choice = "var", axes = 1, top = 10)
+fviz_contrib(mca, choice = "var", axes = 2, top = 10)
+plot(mca, invisible=c("ind"))
+plot(mca, invisible=c("ind"),habillage = "quali")
+fviz_mca_var(mca, col.var = "cos2",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+             repel = TRUE, # Avoid text overlapping
+             ggtheme = theme_minimal())
+fviz_mca_ind(mca, 
+             label = "none", # hide individual labels
+             habillage = "how", # color by groups 
+             palette = c("#00AFBB", "#E7B800","#d9b3ff"),
+             addEllipses = TRUE, ellipse.type = "confidence",
+             ggtheme = theme_minimal())
+```
+
+<br>
+
+## MCA-analysis conclusion
+
+<br>
+
+Conclusion of the MCA-analysis on tea-data is that data can be described very poorly by any individual dimension (categorical class), as we can see from the first bar-plot: all the variables are somewhat equal - from 15 % to 5 %. In the first dimensions, most of the data variance is caught by attributes "where" and "how". Both explain variance over 20 %. 
+
+In Variable-categories figure, we are able to recognize that how- and where -related var. are well represented by our 2 dimensions (MCA). Cos2-value defines how well category can be explained by components produced by MCA.
+
+In the last figure, I plotted the observations in MCA-dimensions and categorized them with "how"- variable: it seems the data can be described fairly well with those 3 categories. Same phenomenom can be seen with "where"-variable.
+
+<br>
 
 
 
