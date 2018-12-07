@@ -4,3 +4,49 @@ output: html_document
 ---
 
 # Analysis of longitudinal data
+## Part 1: Analysis of RATS data
+
+<br>
+
+### RATS data overview
+
+<br>
+
+### Plot of individual rat growth profiles
+
+<br>
+
+### Scatterplot matrix of repeated measures in rat growth data
+
+<br>
+
+### Fitted growth rate profiles from the interaction model and observed growth rate profiles
+
+<br>
+
+## Part 2: Analysis of BPRS data
+
+<br>
+
+### BPRS data overview
+
+<br>
+
+### Individual response profiles by treatment group for the BPRS data
+
+<br>
+
+### Individual response profiles for BPRS data after standardization.
+
+<br>
+
+### Mean response profiles for the two treatment groups in the BPRS data.
+
+<br>
+
+### Boxplots for the BPRS data
+
+<br>
+
+### Boxplots of mean summary measures for the two treatment groups in the BPRS data,
+
