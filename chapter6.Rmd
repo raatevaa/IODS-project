@@ -10,13 +10,87 @@ output: html_document
 
 ### RATS data overview
 
+RATS data consists of rat weight measurements over 9 weeks period. Rats were divided into three groups, where each group had individual nutrient diet. Aim of the study was to solve the differences between diets through weight development of study rats.
+
+Data has total of 16 rats, divided somewhat equally to the diet groups. Group 1 had 8 obs. and other 2 groups had only 4.
+
+Weight was measured in 9 phases (longitudinal). More detailed information is shown below.
+
+<br>
+
+```{r rats}
+library(dplyr)
+library(tidyr)
+RATS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", header = TRUE, sep = '\t')
+RATS$ID <- factor(RATS$ID)
+RATS$Group <- factor(RATS$Group)
+names(RATS)
+summary(RATS)
+glimpse(RATS)
+
+
+```
+
 <br>
 
 ### Plot of individual rat growth profiles
 
 <br>
 
+```{r rats0}
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+RATS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", header = TRUE, sep = '\t')
+RATS$ID <- factor(RATS$ID)
+RATS$Group <- factor(RATS$Group)
+
+RATSL <- RATS %>%
+  gather(key = WD, value = Weight, -ID, -Group) %>%
+  mutate(Time = as.integer(substr(WD,3,4))) 
+ggplot(RATSL, aes(x = Time, y = Weight, group = ID,color=Group)) +
+  geom_line() +
+  geom_line(aes(linetype = Group)) +
+  scale_x_continuous(name = "Time (days)", breaks = seq(0, 60, 10)) +
+  scale_y_continuous(name = "Weight (grams)") +
+  theme(legend.position = "top")
+
+
+
+```
+
+<br> 
+
+**Note** From the individual rat growth profile, we are able to recognize that the diet group 1 are generally lighter, when compared to other two groups. Also, its easy to see that the rats in group 1 get weight much less than the rats in other groups.
+
+<br>
+
 ### Scatterplot matrix of repeated measures in rat growth data
+
+<br>
+```{r rats1}
+RATS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", header = TRUE, sep = '\t')
+RATS$ID <- factor(RATS$ID)
+RATS$Group <- factor(RATS$Group)
+
+RATSL <- RATS %>%
+  gather(key = WD, value = Weight, -ID, -Group) %>%
+  mutate(Time = as.integer(substr(WD,3,4))) 
+pairs(RATS[,3:11], 
+   main="Scatterplot matrix of repeated measures in rat growth data.")
+
+```
+
+<br>
+
+**Note** From scatterplot matrix we are able to recognize that there are dependencies between the measurements made at different points of time: this is of course obvious since the rats who are getting weight - will most likely get weight on upcoming measurements aswell
+
+Longitudinal data, where a response variable is measured on each subject
+on several different occasions poses problems for their analysis because the
+repeated measurements on each subject are very likely to be correlated rather
+than independent. (MABS4IODS, part VI)
 
 <br>
 
@@ -24,15 +98,101 @@ output: html_document
 
 <br>
 
+Next we will create a random intercept and random slope model with the interaction (Group × Time Interaction to Rat Growth Data) and compare it to model without interaction (anova table).
+
+<br>
+
+```{r rats2}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lme4)
+library(cowplot)
+
+RATS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", header = TRUE, sep = '\t')
+RATS$ID <- factor(RATS$ID)
+RATS$Group <- factor(RATS$Group)
+
+RATSL <- RATS %>%
+  gather(key = WD, value = Weight, -ID, -Group) %>%
+  mutate(Time = as.integer(substr(WD,3,4))) 
+
+g1 <- ggplot(RATSL, aes(x = Time, y = Weight, group = ID, color=Group)) +
+  geom_line(aes(linetype = Group)) +
+  scale_x_continuous(name = "Time (days)", breaks = seq(0, 60, 20)) +
+  scale_y_continuous(name = "Observed weight (grams)") +
+  theme(legend.position = "top")
+
+RATS_ref1 <- lmer(Weight ~ Time + Group + (Time | ID), data = RATSL, REML = FALSE)
+
+RATS_ref2 <- lmer(Weight ~ Time * Group + (Time | ID), data = RATSL, REML = FALSE)
+anova(RATS_ref2, RATS_ref1)
+Fitted <- fitted(RATS_ref2)
+
+RATSL <- RATSL  %>%
+  mutate(fitted = as.numeric(Fitted)) 
+
+g2 <- ggplot(RATSL, aes(x = Time, y = fitted, group = ID, color=Group)) +
+  geom_line(aes(linetype = Group)) +
+  scale_x_continuous(name = "Time (days)", breaks = seq(0, 60, 20)) +
+  scale_y_continuous(name = "Fitted weight (grams)") +
+  theme(legend.position = "top")
+
+plot_grid(g1, g2, labels = "AUTO")
+```
+
+<br>
+
+
+**Note** From the Anova, we are able to conclude that interaction is 12.36 (Chisq Chi) with 2 DF; the associated p-value is very small, and we can conclude that the interaction model provides a better fit for the rat growth data (MABS4IODS)
+
+Stat. signif. is 0.00207 **.
+
+<br>
+
+
 ## Part 2: Analysis of BPRS data
 
 <br>
 
 ### BPRS data overview
 
+Likewise the earlier RATS data, BPRS (Brief Psychiatric Rating Scale?) data has measurements made over time. The data consists of 40 subjects who have been interviewed by doctors for 9 weeks (one measurement each week). Measurements are presented by bprs-value.
+
+Below is the summary of the dataframe.
+
+
 <br>
 
+```{r BPRS0}
+BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
+
+names(BPRS) 
+dim(BPRS)
+summary(BPRS)
+
+```
+
 ### Individual response profiles by treatment group for the BPRS data
+
+<br>
+
+```{r BPRS1}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+BPRSL <-  BPRS %>% gather(key = weeks, value = bprs, -treatment, -subject)
+BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks,5,6)))
+ggplot(BPRSL, aes(x = week, y = bprs, linetype = subject)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(BPRSL$bprs), max(BPRSL$bprs)))
+```
 
 <br>
 
@@ -40,13 +200,194 @@ output: html_document
 
 <br>
 
-### Mean response profiles for the two treatment groups in the BPRS data.
+```{r BPRS2}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+BPRSL <-  BPRS %>% gather(key = weeks, value = bprs, -treatment, -subject)
+BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks,5,6)))
+
+BPRSL <- BPRSL %>%
+  group_by(week) %>%
+  mutate(stdbprs = as.numeric(scale(bprs))) %>%
+  ungroup()
+ggplot(BPRSL, aes(x = week, y = stdbprs, linetype = subject)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(name = "standardized bprs")
+```
+<br>
+
+**Note** The tracking phenomenom can be seen from the standardized values of each observation. There are substantial individual differences and variability appears to decrease with time. (MABS4IODS)
+
+
+
+### Mean response profiles for the two treatment groups in the BPRS data
 
 <br>
+
+Better way to graphically represent the differences between observations, is to plot average profiles of each treatment group. 
+
+<br>
+
+```{r BPRS3}
+BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+BPRSL <-  BPRS %>% gather(key = weeks, value = bprs, -treatment, -subject)
+BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks,5,6)))
+BPRSL <- BPRSL %>%
+  group_by(week) %>%
+  mutate(stdbprs = as.numeric(scale(bprs))) %>%
+  ungroup()
+n <- BPRSL$week %>% unique() %>% length()
+
+BPRSS <- BPRSL %>%
+  group_by(treatment, week) %>%
+  summarise(mean = mean(bprs), se = sd(bprs)/sqrt(n)) %>%
+  ungroup()
+ggplot(BPRSS, aes(x = week, y = mean, linetype = treatment, shape = treatment)) +
+  geom_line() +
+  scale_linetype_manual(values = c(1,2)) +
+  geom_point(size=3) +
+  scale_shape_manual(values = c(1,2)) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, linetype="1"), width=0.3) +
+  theme(legend.position = c(0.8,0.8)) +
+  scale_y_continuous(name = "mean(bprs) +/- se(bprs)")
+```
+<br>
+
+From mean response profiles for the two treatment groups in the BPRS data, we are able to figure out that there seems to be slight overlap between profiles. It indicates that there are differences between treatment groups.
+
 
 ### Boxplots for the BPRS data
 
 <br>
 
-### Boxplots of mean summary measures for the two treatment groups in the BPRS data,
+```{r BPRS4}
+BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+BPRSL <-  BPRS %>% gather(key = weeks, value = bprs, -treatment, -subject)
+BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks,5,6)))
+BPRSL <- BPRSL %>%
+  group_by(week) %>%
+  mutate(stdbprs = as.numeric(scale(bprs))) %>%
+  ungroup()
+n <- BPRSL$week %>% unique() %>% length()
+
+BPRSS <- BPRSL %>%
+  group_by(treatment, week) %>%
+  summarise(mean = mean(bprs), se = sd(bprs)/sqrt(n)) %>%
+  ungroup()
+ggplot(data = BPRSL, aes(x=weeks, y=bprs)) + geom_boxplot(aes(fill=treatment))
+```
+
+<br>
+
+**Note** Mean profiles can be graphically shown as boxplots where treatment groups are side-by-side. Plot clearly shows that there might exist differences between the treatment groups and outliers (points). Also, there is clear decline in bprs-values over time. Treatments seem to be working for patients.
+
+<br>
+
+### Boxplot of the mean versus treatment
+
+<br>
+
+```{r BPRS5}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lme4)
+library(cowplot)
+BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+BPRSL <-  BPRS %>% gather(key = weeks, value = bprs, -treatment, -subject)
+BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks,5,6)))
+BPRSL <- BPRSL %>%
+  group_by(week) %>%
+  mutate(stdbprs = as.numeric(scale(bprs))) %>%
+  ungroup()
+n <- BPRSL$week %>% unique() %>% length()
+BPRSS <- BPRSL %>%
+  group_by(treatment, week) %>%
+  summarise(mean = mean(bprs), se = sd(bprs)/sqrt(n)) %>%
+  ungroup()
+
+BPRSL8S <- BPRSL %>%
+  filter(week > 0) %>%
+  group_by(treatment, subject) %>%
+  summarise( mean=mean(bprs) ) %>%
+  ungroup()
+g1 <- ggplot(BPRSL8S, aes(x = treatment, y = mean)) +
+  geom_boxplot() +
+  ggtitle("Original")+
+  stat_summary(fun.y = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(bprs), weeks 1-8")
+BPRSL8S1 <- BPRSL8S  %>%
+  filter(subject != 11)
+
+g2 <- ggplot(BPRSL8S1, aes(x = treatment, y = mean)) +
+  geom_boxplot() +
+  ggtitle("Outlier filtered")+
+  stat_summary(fun.y = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(bprs), weeks 1-8")
+plot_grid(g1, g2, labels = "AUTO")
+```
+
+<br>
+
+### T-test and Anova (with baseline)
+
+<br>
+
+```{r BPRS6}
+BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+BPRSL <-  BPRS %>% gather(key = weeks, value = bprs, -treatment, -subject)
+BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks,5,6)))
+BPRSL <- BPRSL %>%
+  group_by(week) %>%
+  mutate(stdbprs = as.numeric(scale(bprs))) %>%
+  ungroup()
+n <- BPRSL$week %>% unique() %>% length()
+BPRSS <- BPRSL %>%
+  group_by(treatment, week) %>%
+  summarise(mean = mean(bprs), se = sd(bprs)/sqrt(n)) %>%
+  ungroup()
+
+BPRSL8S <- BPRSL %>%
+  filter(week > 0) %>%
+  group_by(treatment, subject) %>%
+  summarise( mean=mean(bprs) ) %>%
+  ungroup()
+
+t.test(mean ~ treatment, data = BPRSL8S1, var.equal = TRUE)
+
+# Add the baseline from the original data as a new variable to the summary data
+BPRSL8S2 <- BPRSL8S %>%
+  mutate(baseline = BPRS$week0)
+
+# Fit the linear model with the mean as the response 
+fit <- lm(mean ~ baseline + treatment, data = BPRSL8S2)
+
+# Compute the analysis of variance table for the fitted model with anova()
+anova = anova(fit)
+anova
+```
+
+<br>
+
+T-test breaks my earlier thought that there would be statistical differences between the treatment groups. 
+p-value = 0.6176
+
+
+From Anova-table we are able to recognize that bprs-values of each subject are strongly correlated with the baseline (week 0) bprs-values. Although, there is no statistical significance between the treatment groups. p-value is 0.8148.
+
 
