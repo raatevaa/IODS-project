@@ -384,7 +384,7 @@ anova
 
 <br>
 
-T-test breaks my earlier thought that there would be statistical differences between the treatment groups. 
+T-test shatters my earlier conclusion (boxplots) that there would be statistical differences between the treatment groups. 
 p-value = 0.6176
 
 
