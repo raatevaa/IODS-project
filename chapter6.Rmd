@@ -98,7 +98,7 @@ than independent. (MABS4IODS, part VI)
 
 <br>
 
-Next we will create a random intercept and random slope model with the interaction (Group × Time Interaction to Rat Growth Data) and compare it to model without interaction (anova table).
+Next we will create a random intercept and random slope model with the interaction (Group x Time Interaction to Rat Growth Data) and compare it to model without interaction (anova table).
 
 <br>
 
@@ -391,3 +391,4 @@ p-value = 0.6176
 From Anova-table we are able to recognize that bprs-values of each subject are strongly correlated with the baseline (week 0) bprs-values. Although, there is no statistical significance between the treatment groups. p-value is 0.8148.
 
 
+<br>
